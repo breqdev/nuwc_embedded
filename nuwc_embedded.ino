@@ -48,6 +48,8 @@ void ssd1306_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *c
 
       Wire.beginTransmission(I2C_ADDR);
       // two things are missing here...
+      Wire.write(0x40);
+      Wire.write(data_byte);
       Wire.endTransmission();
     }
   }
@@ -86,8 +88,10 @@ void encoder_isr() {
   // has moved from its current position. You'll need to update it here based
   // on the direction of the encoder tick.
   if (data) {
+    encoder_ticks += 1;
     // TODO
   } else {
+    encoder_ticks -= 1;
     // TODO
   }
 }
@@ -109,6 +113,7 @@ static void button1_callback(lv_event_t * e)
     servo_position = 0;
   }
   // TODO: make it always reset to 0 instead
+  servo_position = 0;
   myservo.write(servo_position);
   lv_label_set_text_fmt(servo_label, "%d°", servo_position);
 
@@ -166,35 +171,35 @@ void setup() {
   indev_drv.read_cb = encoder_read;
   lv_indev_t* enc_indev = lv_indev_drv_register(&indev_drv);
 
-  lv_obj_t* hello_label = lv_label_create(lv_scr_act());
-  lv_label_set_text(hello_label, "Hello from NUWC");
-  lv_obj_align(hello_label, LV_ALIGN_CENTER, 0, 0);
+  // lv_obj_t* hello_label = lv_label_create(lv_scr_act());
+  // lv_label_set_text(hello_label, "Hello from NUWC");
+  // lv_obj_align(hello_label, LV_ALIGN_CENTER, 0, 0);
 
   // Uncomment the following to show the buttons:
 
-  // lv_obj_t * cont_row = lv_obj_create(lv_scr_act());
-  // lv_obj_set_flex_flow(cont_row, LV_FLEX_FLOW_ROW);
-  // lv_obj_set_flex_align(cont_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
+  lv_obj_t * cont_row = lv_obj_create(lv_scr_act());
+  lv_obj_set_flex_flow(cont_row, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(cont_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
 
-  // lv_obj_t *btn = lv_btn_create(cont_row);
-  // lv_obj_t *label = lv_label_create(btn);
-  // lv_obj_add_event_cb(btn, button1_callback, LV_EVENT_CLICKED, NULL);
-  // lv_label_set_text(label, "-");
-  // lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_t *btn = lv_btn_create(cont_row);
+  lv_obj_t *label = lv_label_create(btn);
+  lv_obj_add_event_cb(btn, button1_callback, LV_EVENT_CLICKED, NULL);
+  lv_label_set_text(label, "0");
+  lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
-  // lv_obj_t *btn2 = lv_btn_create(cont_row);
-  // lv_obj_t *label2 = lv_label_create(btn2);
-  // lv_obj_add_event_cb(btn2, button2_callback, LV_EVENT_CLICKED, NULL);
-  // lv_label_set_text(label2, "+");
-  // lv_obj_align(label2, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_t *btn2 = lv_btn_create(cont_row);
+  lv_obj_t *label2 = lv_label_create(btn2);
+  lv_obj_add_event_cb(btn2, button2_callback, LV_EVENT_CLICKED, NULL);
+  lv_label_set_text(label2, "+");
+  lv_obj_align(label2, LV_ALIGN_CENTER, 0, 0);
 
-  // servo_label = lv_label_create(cont_row);
-  // lv_label_set_text_fmt(servo_label, "%d°", servo_position);
+  servo_label = lv_label_create(cont_row);
+  lv_label_set_text_fmt(servo_label, "%d°", servo_position);
 
-  // lv_group_t *g = lv_group_create();
-  // lv_group_add_obj(g, btn);
-  // lv_group_add_obj(g, btn2);
-  // lv_indev_set_group(enc_indev, g);
+  lv_group_t *g = lv_group_create();
+  lv_group_add_obj(g, btn);
+  lv_group_add_obj(g, btn2);
+  lv_indev_set_group(enc_indev, g);
 }
 
 void loop() {
