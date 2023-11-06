@@ -133,6 +133,17 @@ static void button2_callback(lv_event_t * e)
   lv_label_set_text_fmt(servo_label, "%d°", servo_position);
 }
 
+static void button3_callback(lv_event_t * e)
+{
+  // Right now, this just reduces the angle
+  servo_position -= 15;
+  if (servo_position < 0) {
+    servo_position = 0;
+  }
+  myservo.write(servo_position);
+  lv_label_set_text_fmt(servo_label, "%d°", servo_position);
+}
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -197,12 +208,19 @@ void setup() {
   lv_label_set_text(label2, "+");
   lv_obj_align(label2, LV_ALIGN_CENTER, 0, 0);
 
+  lv_obj_t *btn3 = lv_btn_create(cont_row);
+  lv_obj_t *label3 = lv_label_create(btn3);
+  lv_obj_add_event_cb(btn3, button3_callback, LV_EVENT_CLICKED, NULL);
+  lv_label_set_text(label3, "-");
+  lv_obj_align(label3, LV_ALIGN_CENTER, 0, 0);
+
   servo_label = lv_label_create(cont_row);
   lv_label_set_text_fmt(servo_label, "%d°", servo_position);
 
   lv_group_t *g = lv_group_create();
   lv_group_add_obj(g, btn);
   lv_group_add_obj(g, btn2);
+  lv_group_add_obj(g, btn3);
   lv_indev_set_group(enc_indev, g);
 }
 
