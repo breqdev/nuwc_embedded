@@ -9,8 +9,8 @@ const int I2C_SDA = 16;
 const int I2C_SCL = 17;
 
 const int ENCODER_BUTTON = 18;
-const int ENCODER_DATA = 14;
-const int ENCODER_CLOCK = 15;
+const int ENCODER_CLOCK = 14;
+const int ENCODER_DATA = 15;
 long int encoder_last_tick = 0;
 int encoder_ticks = 0;
 
