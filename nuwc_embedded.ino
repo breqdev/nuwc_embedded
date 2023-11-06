@@ -5,12 +5,16 @@
 #include "lvgl.h"
 #include "ssd1306.h"
 
-const int ENCODER_BUTTON = 2;
-const int ENCODER_DATA = 3;
-const int ENCODER_CLOCK = 4;
+const int I2C_SDA = 16;
+const int I2C_SCL = 17;
+
+const int ENCODER_BUTTON = 18;
+const int ENCODER_DATA = 14;
+const int ENCODER_CLOCK = 15;
 long int encoder_last_tick = 0;
 int encoder_ticks = 0;
 
+const int SERVO_PIN = 0;
 Servo myservo;
 
 static const uint16_t WIDTH = 128;
@@ -77,9 +81,9 @@ void encoder_isr() {
   // Sometimes the switch is "bouncy," meaning that a single click can create
   // a few electrical connections in rapid succession as the contacts in the
   // switch bounce off of each other. To compensate for this, we ignore any
-  // ticks that happened within 50 milliseconds of each other.
+  // ticks that happened within 75 milliseconds of each other.
   long int now = millis();
-  if (now - encoder_last_tick < 50) {
+  if (now - encoder_last_tick < 75) {
     return;
   }
   encoder_last_tick = now;
@@ -142,13 +146,13 @@ void setup() {
   pinMode(ENCODER_DATA, INPUT_PULLUP);
   pinMode(ENCODER_BUTTON, INPUT_PULLUP);
 
-  myservo.attach(A0);
+  myservo.attach(0);
   myservo.write(servo_position);
 
-  pinMode(A2, OUTPUT);
-  pinMode(A3, OUTPUT);
-  Wire.setSDA(A2);
-  Wire.setSCL(A3);
+  pinMode(I2C_SDA, OUTPUT);
+  pinMode(I2C_SCL, OUTPUT);
+  Wire.setSDA(I2C_SDA);
+  Wire.setSCL(I2C_SCL);
   Wire.begin();
   ssd1306_init(I2C_ADDR, WIDTH, HEIGHT);
 
