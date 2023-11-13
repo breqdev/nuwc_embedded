@@ -391,7 +391,7 @@
 
 /*Pixel perfect monospace fonts*/
 #define LV_FONT_UNSCII_8  0
-#define LV_FONT_UNSCII_16 0
+#define LV_FONT_UNSCII_16 1
 
 /*Optionally declare custom fonts here.
  *You can use these fonts as default font too and they will be available globally.
@@ -573,7 +573,7 @@
  *----------*/
 
 /*A simple, impressive and very complete theme*/
-#define LV_USE_THEME_DEFAULT 1
+#define LV_USE_THEME_DEFAULT 0
 #if LV_USE_THEME_DEFAULT
 
     /*0: Light mode; 1: Dark mode*/
@@ -590,7 +590,7 @@
 #define LV_USE_THEME_BASIC 0
 
 /*A theme designed for monochrome displays*/
-#define LV_USE_THEME_MONO 0
+#define LV_USE_THEME_MONO 1
 
 /*-----------
  * Layouts
