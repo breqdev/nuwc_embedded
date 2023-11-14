@@ -1,8 +1,8 @@
 #include <string>
 
 #include <Arduino.h>
-#include <Servo.h>
 #include <Wire.h>
+#include <KeyboardBT.h>
 
 #include "lvgl.h"
 #include "ssd1306.h"
@@ -18,9 +18,6 @@ const int ENCODER_DATA = 15;
 long int encoder_last_tick = 0;
 int encoder_ticks = 0;
 
-const int SERVO_PIN = 0;
-Servo myservo;
-
 static const uint16_t WIDTH = 128;
 static const uint16_t HEIGHT = 64;
 static const uint8_t I2C_ADDR = 0x3C;
@@ -28,9 +25,7 @@ static const uint8_t I2C_ADDR = 0x3C;
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[WIDTH * HEIGHT / 8];
 
-char* emojis[] = {"😀", "🤣", "😍", "🤪", "🤗", "🤔", "🤯", "🤠", "😴", "😭", "😎", "😱", "😺", "👀", "🎉", "🙏", "💀", "💯", "👍", "👎", "👋", "👏", "🌈", "🕹️", "📻", "📡", "⚡", "🔥"};
-// const char* emojis[] = {"😀", "🤣", "😍", "🤪"};
-// const char* emojis[] = {"+", "-", "="};
+const char *emojis[] = { "😀", "🤣", "😍", "🤔", "👍", "👎", "👋", "📻", "📡", "⚡" };
 
 void ssd1306_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
   uint8_t start_page = area->y1 / 8;
@@ -78,9 +73,6 @@ void ssd1306_round_to_page_boundary(lv_disp_drv_t *disp_drv, lv_area_t *area) {
 
   area->x1 = 0;
   area->x2 = WIDTH - 1;
-
-  // area->y1 = 0;
-  // area->y2 = HEIGHT - 1;
 }
 
 void ssd1306_set_px(lv_disp_drv_t *disp_drv, uint8_t *buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y, lv_color_t color, lv_opa_t opa) {
@@ -118,24 +110,26 @@ void encoder_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
   encoder_ticks = 0;
 }
 
-int servo_position = 45;
+lv_obj_t *msg_label;
+lv_obj_t *author_label;
 
-lv_obj_t* msg_label;
-lv_obj_t* author_label;
 
-const char node_name[] = "BROOKE";
-
-static void emoji_send(lv_event_t * e)
-{
+static void emoji_send(lv_event_t *e) {
   lv_obj_t *button = lv_event_get_current_target(e);
-  char* emoji_chr = (char*)lv_obj_get_user_data(button);
-  lv_label_set_text(msg_label, emoji_chr);
-  lv_label_set_text(author_label, node_name);
+  int emoji_idx = (int)lv_obj_get_user_data(button);
+  lv_label_set_text(msg_label, emojis[emoji_chr]);
+  lv_label_set_text(author_label, "Sent:");
+
+  uint8_t emoji_chr = 225 + (uint8_t)emoji_idx;
+
+  // TODO: send the emoji character
 }
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
+
+  // TODO: initialize the keyboard
 
   String LVGL_Arduino = "Hello Arduino! ";
   LVGL_Arduino += String('V') + lv_version_major() + "." + lv_version_minor() + "." + lv_version_patch();
@@ -145,9 +139,6 @@ void setup() {
   pinMode(ENCODER_CLOCK, INPUT_PULLUP);
   pinMode(ENCODER_DATA, INPUT_PULLUP);
   pinMode(ENCODER_BUTTON, INPUT_PULLUP);
-
-  myservo.attach(0);
-  myservo.write(servo_position);
 
   pinMode(I2C_SDA, OUTPUT);
   pinMode(I2C_SCL, OUTPUT);
@@ -173,7 +164,7 @@ void setup() {
   lv_indev_drv_init(&indev_drv);
   indev_drv.type = LV_INDEV_TYPE_ENCODER;
   indev_drv.read_cb = encoder_read;
-  lv_indev_t* enc_indev = lv_indev_drv_register(&indev_drv);
+  lv_indev_t *enc_indev = lv_indev_drv_register(&indev_drv);
 
   static lv_style_t button_focused_style;
   lv_style_set_bg_color(&button_focused_style, lv_color_hex(0x000000));
@@ -189,21 +180,19 @@ void setup() {
   lv_obj_t *emoji_row = lv_obj_create(screen);
   lv_obj_set_size(emoji_row, WIDTH, HEIGHT / 2);
   lv_obj_set_flex_flow(emoji_row, LV_FLEX_FLOW_ROW);
-  // lv_obj_set_flex_align(emoji_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
 
   lv_group_t *g = lv_group_create();
-  // const char* c = emojis[0];
-  for (char* c : emojis) {
-      lv_obj_t *btn = lv_btn_create(emoji_row);
-      lv_obj_add_style(btn, &button_focused_style, LV_STATE_FOCUSED | LV_STATE_FOCUS_KEY);
-      lv_obj_add_event_cb(btn, emoji_send, LV_EVENT_CLICKED, NULL);
-      lv_obj_set_user_data(btn, (void*)c);
+  for (int i = 0; i < sizeof(emojis) / sizeof(emojis[0]); ++i) {
+    lv_obj_t *btn = lv_btn_create(emoji_row);
+    lv_obj_add_style(btn, &button_focused_style, LV_STATE_FOCUSED | LV_STATE_FOCUS_KEY);
+    lv_obj_add_event_cb(btn, emoji_send, LV_EVENT_CLICKED, NULL);
+    lv_obj_set_user_data(btn, (void *)i);
 
-      lv_obj_t *label = lv_label_create(btn);
-      lv_obj_add_style(label, &emoji_style, LV_PART_MAIN);
-      lv_label_set_text(label, c);
-      lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-      lv_group_add_obj(g, btn);
+    lv_obj_t *label = lv_label_create(btn);
+    lv_obj_add_style(label, &emoji_style, LV_PART_MAIN);
+    lv_label_set_text(label, emojis[i]);
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+    lv_group_add_obj(g, btn);
   }
   lv_indev_set_group(enc_indev, g);
 
@@ -217,16 +206,12 @@ void setup() {
   static lv_style_t monospace;
   lv_style_set_text_font(&monospace, &lv_font_unscii_16);
 
-    lv_obj_add_style(author_label, &monospace, LV_PART_MAIN);
-    lv_label_set_text(author_label, "");
-  //       lv_obj_align(msg_label, LV_ALIGN_CENTER, 0, 0);
-
+  lv_obj_add_style(author_label, &monospace, LV_PART_MAIN);
+  lv_label_set_text(author_label, "");
 
   msg_label = lv_label_create(msg_row);
-  // // lv_obj_set_size(msg_label, HEIGHT / 2, HEIGHT / 2);
   lv_obj_add_style(msg_label, &emoji_style, LV_PART_MAIN);
   lv_label_set_text(msg_label, "");
-  //       lv_obj_align(msg_label, LV_ALIGN_CENTER, 0, 0);
 }
 
 void loop() {
